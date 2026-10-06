@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// MBA Pathfinder — who can read and write what.
+//
+//   admins/{email}        Existence of a document grants admin access to that Google account.
+//                         Create these by hand in the Firebase console (doc ID = the admin's email, lowercase).
+//   students/{uid}        A student's own saved profile + progress.
+//   submissions/{id}      One document per completed assessment, for the admin dashboard.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/admins/$(email()));
+    }
+
+    function validProfile(p) {
+      return p is map
+        && p.size() <= 20
+        && p.name is string && p.name.size() <= 120
+        && p.email is string && p.email.size() <= 200;
+    }
+
+    // Users may only check whether *they* are an admin. Nobody can grant admin from the app.
+    match /admins/{adminEmail} {
+      allow read: if signedIn() && email() == adminEmail;
+      allow write: if false;
+    }
+
+    match /students/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['profile', 'assessmentDone', 'name', 'email', 'updatedAt'])
+        && validProfile(request.resource.data.profile)
+        && request.resource.data.assessmentDone is bool
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'profile', 'submittedAt', 'createdAt'])
+        && validProfile(request.resource.data.profile)
+        && request.resource.data.submittedAt is string
+        && request.resource.data.createdAt == request.time;
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "mba-pathfinder",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MBA Pathfinder — Specialization & Career Recommendation",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "deploy": "npm run build && npx firebase-tools deploy --only hosting,firestore",
+    "deploy:vercel": "npx vercel --prod",
+    "deploy:rules": "npx firebase-tools deploy --only firestore"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
+    "lucide-react": "^1.48.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  }
+}
